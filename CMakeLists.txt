@@ -35,11 +35,21 @@ FetchContent_Declare(
     GIT_SHALLOW    ON)
 FetchContent_MakeAvailable(JUCE)
 
+# AAX (Pro Tools): opcional. Requiere el SDK de Avid (licencia propia, no se puede redistribuir):
+#   cmake ... -DAAX_SDK_PATH=/ruta/al/aax-sdk
+set(AAX_SDK_PATH "" CACHE PATH "Ruta al SDK de AAX de Avid (vacío = no compilar AAX)")
+set(SE_FORMATS VST3 AU Standalone)
+if(AAX_SDK_PATH)
+    juce_set_aax_sdk_path("${AAX_SDK_PATH}")
+    list(APPEND SE_FORMATS AAX)
+endif()
+
 juce_add_plugin(StereoExpander
     COMPANY_NAME                "VooD"
     PLUGIN_MANUFACTURER_CODE    Vood
     PLUGIN_CODE                 SExS
-    FORMATS                     VST3 AU Standalone
+    FORMATS                     ${SE_FORMATS}
+    AAX_IDENTIFIER              com.vood.stereoexpander
     PRODUCT_NAME                "Stereo Expander"
     IS_SYNTH                    FALSE
     NEEDS_MIDI_INPUT            FALSE

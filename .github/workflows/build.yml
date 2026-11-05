@@ -54,11 +54,26 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ninja
 
+      # ---- AAX (Pro Tools), opcional ----------------------------------------------------------
+      # Se activa solo si defines la variable de repositorio AAX_SDK_REPO (p. ej. "voodatari/aax-sdk",
+      # un repo PRIVADO con el SDK de Avid) y el secreto AAX_SDK_TOKEN (PAT con acceso de lectura).
+      - name: Descargar SDK de AAX
+        id: aax
+        if: vars.AAX_SDK_REPO != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.AAX_SDK_REPO }}
+          token: ${{ secrets.AAX_SDK_TOKEN }}
+          path: aax-sdk
+
       - name: Configurar
-        run: >
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          ${{ matrix.cmake_args }}
+        shell: bash
+        run: |
+          AAX_ARG=""
+          if [ -d aax-sdk ]; then AAX_ARG="-DAAX_SDK_PATH=$GITHUB_WORKSPACE/aax-sdk"; fi
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            ${{ matrix.cmake_args }} $AAX_ARG
 
       - name: Compilar
         run: cmake --build build --parallel
@@ -81,6 +96,10 @@ jobs:
           ditto -c -k --keepParent "$OUT/VST3/Stereo Expander.vst3"            "dist/StereoExpander-VST3-${{ matrix.id }}.zip"
           ditto -c -k --keepParent "$OUT/AU/Stereo Expander.component"         "dist/StereoExpander-AU-${{ matrix.id }}.zip"
           ditto -c -k --keepParent "$OUT/Standalone/Stereo Expander.app"       "dist/StereoExpander-Standalone-${{ matrix.id }}.zip"
+          # AAX: SIN firmar con PACE (solo carga en Pro Tools Developer). Ver README.
+          if [ -d "$OUT/AAX/Stereo Expander.aaxplugin" ]; then
+            ditto -c -k --keepParent "$OUT/AAX/Stereo Expander.aaxplugin"      "dist/StereoExpander-AAX-UNSIGNED-${{ matrix.id }}.zip"
+          fi
 
       # ---- Windows ---------------------------------------------------------------------------
       - name: Empaquetar - Windows
@@ -91,6 +110,9 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
           Compress-Archive -Path "$out/VST3/Stereo Expander.vst3"            -DestinationPath "dist/StereoExpander-VST3-${{ matrix.id }}.zip"
           Compress-Archive -Path "$out/Standalone/Stereo Expander.exe"       -DestinationPath "dist/StereoExpander-Standalone-${{ matrix.id }}.zip"
+          if (Test-Path "$out/AAX/Stereo Expander.aaxplugin") {
+            Compress-Archive -Path "$out/AAX/Stereo Expander.aaxplugin"      -DestinationPath "dist/StereoExpander-AAX-UNSIGNED-${{ matrix.id }}.zip"
+          }
 
       - uses: actions/upload-artifact@v4
         with:
