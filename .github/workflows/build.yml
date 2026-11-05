@@ -29,20 +29,42 @@ jobs:
           - name: Windows x64
             os: windows-latest
             id: windows-x64
-            cmake_args: -A x64
+            cmake_args: ""
           - name: macOS arm64 (Apple Silicon)
-            os: macos-14            # runner M1; el binario arm64 vale igual para M4
+            os: macos-latest        # runner Apple Silicon; el binario arm64 vale igual para M4
             id: macos-arm64
             cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
 
     steps:
       - uses: actions/checkout@v4
 
+      # Compilador en PATH (MSVC x64) para poder usar Ninja en Windows
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+        with:
+          arch: x64
+
+      # Caché del compilador: la 1.ª ejecución compila JUCE entero; las siguientes casi no compilan nada
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.id }}
+          max-size: 500M
+
+      - name: Instalar Ninja (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
       - name: Configurar
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }}
+        run: >
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          ${{ matrix.cmake_args }}
 
       - name: Compilar
-        run: cmake --build build --config Release --parallel
+        run: cmake --build build --parallel
+
+      - name: Estadísticas de ccache
+        run: ccache --show-stats
 
       # ---- macOS: firma ad-hoc (sin cuenta de desarrollador) y empaquetado -------------------
       - name: Firmar (ad-hoc) y empaquetar - macOS
