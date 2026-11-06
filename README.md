@@ -31,20 +31,6 @@ Tests del DSP (sin JUCE): `g++ -std=c++17 tests/dsp_test.cpp -o dsp_test && ./ds
 Los `.zip` salen como artefactos de la ejecución. Si empujas una etiqueta `v*` (por ejemplo `v1.1.0`) se
 crea además un *release* en borrador.
 
-## AAX (Pro Tools)
-
-El proyecto ya está preparado, pero **AAX no se compila por defecto** porque necesita el SDK de Avid.
-
-1. Crea una cuenta en <https://developer.avid.com> y descarga el *AAX SDK* (licencia propia de Avid:
-   **no lo subas a un repositorio público**).
-2. Local: `cmake -S . -B build -DAAX_SDK_PATH=/ruta/al/aax-sdk` y compila; sale `Stereo Expander.aaxplugin`.
-3. GitHub Actions: sube el SDK a un repo **privado** tuyo, y en este repo define la variable
-   `AAX_SDK_REPO` (por ejemplo `voodatari/aax-sdk`) y el secreto `AAX_SDK_TOKEN` (PAT con lectura).
-   El CI generará `StereoExpander-AAX-UNSIGNED-*.zip`.
-4. **Firma:** Pro Tools comercial solo carga AAX firmados con PACE (`wraptool`, vía tu cuenta de
-   desarrollador de Avid). Sin firma solo funciona en *Pro Tools Developer*. El CI **no firma**.
-   Para M4: Pro Tools es nativo Apple Silicon desde 2022.12 y el binario sale arm64.
-   Instalación: `/Library/Application Support/Avid/Audio/Plug-Ins/`.
 
 ## Instalar en macOS
 
@@ -62,7 +48,4 @@ Developer ID y notarizar.
 ## Aviso legal
 
 El plugin original es software comercial de terceros (© Spectral Design GmbH / Steinberg). Este repositorio
-contiene **código propio**: ni la DLL original ni código decompilado se incluyen. Las ideas y
-algoritmos (mid/side, retardo, Butterworth) no son material con copyright, pero el nombre y la imagen del
-producto original sí pueden estar protegidos: **no publiques ni vendas esto con el nombre del original**
-sin permiso. Por eso el repo es privado.
+contiene **código propio**: ni la DLL original ni código decompilado se incluyen. 
